@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>for you 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Sacramento&display=swap" rel="stylesheet"/>
+  <style>
+    /* ═══════════════════════════════════════
+       ✏️  EDIT SECTION — change these values
+       ═══════════════════════════════════════ */
+    :root {
+      --game-name:  "your game";   /* e.g. "Valorant"  */
+      --your-name:  "me";          /* your name/nickname */
+    }
+
+    /* ── PALETTE ── */
+    :root {
+      --rose:      #e8738a;
+      --rose-dark: #c45570;
+      --blush:     #f7c5cc;
+      --petal:     #fce8ec;
+      --cream:     #fdf6f0;
+      --sage:      #9bab9e;
+      --ink:       #3b2d2d;
+      --soft:      #6b5050;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Lora', serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ── PETAL RAIN ── */
+    #petal-layer {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 999;
+      overflow: hidden;
+    }
+    .petal {
+      position: absolute; top: -50px;
+      opacity: 0;
+      animation: fall linear infinite;
+    }
+    @keyframes fall {
+      0%   { opacity: 0;   transform: translateY(0)     rotate(0deg);   }
+      8%   { opacity: .75; }
+      92%  { opacity: .5;  }
+      100% { opacity: 0;   transform: translateY(105vh) rotate(400deg); }
+    }
+
+    /* ── PAGE STACK ── */
+    .page {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 50px 24px 100px;
+      opacity: 0;
+      pointer-events: none;
+      overflow-y: auto;
+      transition: opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1);
+      transform: translateX(60px);
+    }
+    .page.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(0);
+    }
+
+    /* ── BOTTOM NAV BAR ── */
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      background: rgba(253,246,240,.9);
+      backdrop-filter: blur(14px);
+      border-top: 1.5px solid var(--blush);
+      transition: background .4s, border-color .4s;
+    }
+    .nav-btn {
+      flex: 1; max-width: 100px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 4px; cursor: pointer;
+      padding: 8px 4px; border: none; background: none;
+      font-family: 'Lora', serif;
+      color: var(--soft); font-size: .65rem;
+      letter-spacing: .05em; text-transform: uppercase;
+      transition: color .25s;
+    }
+    .nav-btn .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blush); border: 2px solid var(--rose);
+      transition: all .3s;
+    }
+    .nav-btn.active .dot { background: var(--rose); transform: scale(1.5); }
+    .nav-btn.active { color: var(--rose); }
+
+    /* ── PREV / NEXT BUTTONS ── */
+    .pg-btn {
+      position: fixed; bottom: 86px;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Lora', serif; font-size: .88rem;
+      color: var(--rose); cursor: pointer;
+      background: #fff;
+      border: 1.5px solid var(--blush);
+      border-radius: 50px; padding: 9px 20px;
+      z-index: 201;
+      box-shadow: 0 4px 16px #e8738a18;
+      transition: all .25s;
+    }
+    .pg-btn:hover { background: var(--petal); transform: translateY(-2px); box-shadow: 0 8px 24px #e8738a28; }
+    #nextBtn { right: 16px; }
+    #prevBtn { left: 16px; }
+    .pg-btn.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── PROGRESS DOTS ── */
+    .progress-dots {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; z-index: 200;
+    }
+    .pd {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blush); border: 1.5px solid var(--rose);
+      transition: all .3s;
+    }
+    .pd.on { background: var(--rose); transform: scale(1.5); }
+
+    /* ── DARK MODE (page 4) ── */
+    body.dark .nav-bar  { background: rgba(26,16,32,.92); border-color: rgba(255,255,255,.1); }
+    body.dark .nav-btn  { color: #906878; }
+    body.dark .nav-btn.active { color: #f7c5cc; }
+    body.dark .nav-btn .dot  { border-color: #f7c5cc; background: #3d2040; }
+    body.dark .nav-btn.active .dot { background: #f7c5cc; }
+    body.dark .pg-btn   { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: #f0c8d0; }
+    body.dark .pg-btn:hover { background: rgba(255,255,255,.15); }
+    body.dark .pd       { border-color: #f7c5cc; background: #3d2040; }
+    body.dark .pd.on    { background: #f7c5cc; }
+
+    /* ══ SHARED HEADINGS ══ */
+    .eyebrow {
+      font-family: 'Sacramento', cursive;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--rose); margin-bottom: 4px;
+    }
+    .heading {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 6vw, 3.2rem);
+      font-weight: 700; color: var(--ink);
+      text-align: center; margin-bottom: 30px;
+    }
+
+    /* anim on page enter */
+    .page.active .a { animation: rUp .65s both; }
+    .page.active .a:nth-child(1) { animation-delay: .1s; }
+    .page.active .a:nth-child(2) { animation-delay: .28s; }
+    .page.active .a:nth-child(3) { animation-delay: .44s; }
+    .page.active .a:nth-child(4) { animation-delay: .58s; }
+    @keyframes rUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════ PAGE 1 — HERO ══════════ */
+    #p1 {
+      background: linear-gradient(150deg, #fce8ec 0%, #fdf6f0 55%, #fce8ec 100%);
+      text-align: center; gap: 20px;
+    }
+    .h-eyebrow {
+      font-family: 'Sacramento', cursive;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      color: var(--rose);
+    }
+    .h-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 9vw, 5.5rem);
+      font-weight: 700; line-height: 1.1; color: var(--ink);
+    }
+    .h-title em { font-style: italic; color: var(--rose); }
+    .h-sub {
+      font-size: clamp(.95rem, 2.3vw, 1.2rem);
+      color: var(--soft); max-width: 480px; line-height: 1.88;
+    }
+    .h-sub em { color: var(--rose); font-style: italic; }
+
+    /* ══════════ PAGE 2 — BEAUTIFUL ══════════ */
+    #p2 { background: linear-gradient(135deg, #fff8f0 0%, #fce8ec 100%); }
+
+    .cards {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 13px; max-width: 680px; width: 100%;
+    }
+    @media(max-width:520px){ .cards { grid-template-columns: 1fr; } }
+
+    .bc {
+      background: rgba(255,255,255,.72);
+      border: 1.5px solid var(--blush);
+      border-radius: 18px; padding: 20px 18px;
+      position: relative; overflow: hidden;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .bc:hover { transform: translateY(-5px); box-shadow: 0 14px 32px #e8738a1e; }
+    .bc::after {
+      content: ''; position: absolute;
+      top: -22px; right: -22px;
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--blush); opacity: .3;
+    }
+    .bc .ico { font-size: 1.6rem; margin-bottom: 7px; }
+    .bc h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--rose); margin-bottom: 5px; }
+    .bc p  { color: var(--soft); font-size: .85rem; line-height: 1.65; }
+
+    /* ══════════ PAGE 3 — MATTERS ══════════ */
+    #p3 { background: linear-gradient(160deg, #fdf6f0 0%, #f0f5f0 100%); }
+
+    .tl-wrap {
+      max-width: 560px; width: 100%;
+      position: relative; padding-left: 32px;
+    }
+    .tl-wrap::before {
+      content: ''; position: absolute;
+      left: 8px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(to bottom, var(--rose), var(--sage));
+    }
+    .tl { margin-bottom: 26px; position: relative; }
+    .tl::before {
+      content: ''; position: absolute;
+      left: -28px; top: 5px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--rose); border: 3px solid #f0f5f0;
+    }
+    .tl h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--ink); margin-bottom: 4px; }
+    .tl p  { color: var(--soft); font-size: .85rem; line-height: 1.7; }
+
+    /* ══════════ PAGE 4 — DUO INVITE ══════════ */
+    #p4 {
+      background: radial-gradient(ellipse at 30% 20%, #3a1040 0%, #1a1020 60%);
+      color: #f0e6ff;
+    }
+    .duo-card {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 24px; padding: 40px 32px;
+      max-width: 480px; width: 100%; text-align: center;
+      backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+    }
+    .duo-card::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 25% 20%, #e8738a1a, transparent 55%),
+        radial-gradient(circle at 75% 80%, #9b59b61a, transparent 55%);
+    }
+    .duo-card > * { position: relative; }
+    .d-emoji { font-size: 2.6rem; letter-spacing: 4px; margin-bottom: 10px; display: block; }
+    .d-game  {
+      font-family: 'Sacramento', cursive;
+      font-size: 1.25rem; color: var(--blush);
+      margin-bottom: 14px; display: block;
+    }
+    .duo-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.55rem, 5vw, 2.3rem); color: #fff;
+      margin-bottom: 13px;
+    }
+    .duo-card p { font-size: .9rem; line-height: 1.8; color: #d4c5e2; margin-bottom: 22px; }
+    .duo-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+      color: #fff; font-family: 'Lora', serif; font-size: .9rem;
+      padding: 12px 32px; border-radius: 50px; border: none;
+      cursor: pointer; text-decoration: none;
+      box-shadow: 0 8px 22px #e8738a44;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .duo-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 30px #e8738a60; }
+
+    /* ══════════ PAGE 5 — CLOSING ══════════ */
+    #p5 {
+      background: linear-gradient(160deg, #fce8ec 0%, #fff4f7 50%, #fce8ec 100%);
+      text-align: center; gap: 22px;
+    }
+    .c-heart { font-size: 3rem; animation: hb 1.3s infinite; }
+    @keyframes hb { 0%,100%{transform:scale(1)} 15%{transform:scale(1.3)} 30%{transform:scale(1)} 45%{transform:scale(1.18)} }
+    .c-quote {
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: clamp(1.25rem, 3.8vw, 2.1rem);
+      color: var(--ink); max-width: 600px; line-height: 1.6;
+    }
+    .c-sig {
+      font-family: 'Sacramento', cursive;
+      font-size: clamp(1.8rem, 5vw, 2.8rem); color: var(--rose);
+    }
+
+    /* ── CURSOR ── */
+    * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ctext y='20' font-size='18'%3E🌸%3C/text%3E%3C/svg%3E") 12 12, auto; }
+  </style>
+</head>
+<body>
+
+<div id="petal-layer"></div>
+
+<!-- ═══ PAGE 1: HERO ═══ -->
+<div class="page active" id="p1" data-idx="0">
+  <p class="h-eyebrow a">a little something</p>
+  <h1 class="h-title a">you mean the<br/><em>world</em> to me</h1>
+  <!-- ✏️ EDIT this paragraph -->
+  <p class="h-sub a">
+    There are people you meet, and then there are people you <em>find</em>.
+    You're one of the rare ones — and I never want to take that for granted.
+  </p>
+</div>
+
+<!-- ═══ PAGE 2: HOW BEAUTIFUL ═══ -->
+<div class="page" id="p2" data-idx="1">
+  <p class="eyebrow a">honestly though</p>
+  <h2 class="heading a">you're so beautiful</h2>
+  <div class="cards a">
+    <!-- ✏️ EDIT each card's title & text -->
+    <div class="bc"><div class="ico">✨</div><h3>The way you laugh</h3><p>Completely involuntary, totally genuine. It lights up everything around it.</p></div>
+    <div class="bc"><div class="ico">🌙</div><h3>Your mind</h3><p>The thoughts you share, the things you notice — your perspective makes ordinary moments feel rare.</p></div>
+    <div class="bc"><div class="ico">🌸</div><h3>How you care</h3><p>You have this quiet way of noticing when someone needs something. It's rare and it's beautiful.</p></div>
+    <div class="bc"><div class="ico">🌊</div><h3>Your presence</h3><p>Conversations feel warmer, moments feel fuller — just because you're in them.</p></div>
+    <div class="bc"><div class="ico">🎵</div><h3>Your vibe</h3><p>The energy you carry is effortlessly magnetic. You don't even have to try.</p></div>
+    <div class="bc"><div class="ico">💫</div><h3>All of it</h3><p>I could keep listing forever. There's just something about you that's entirely unforgettable.</p></div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 3: HOW MUCH YOU MATTER ═══ -->
+<div class="page" id="p3" data-idx="2">
+  <p class="eyebrow a">no cap</p>
+  <h2 class="heading a">how much you matter</h2>
+  <div class="tl-wrap a">
+    <!-- ✏️ EDIT these reasons -->
+    <div class="tl"><h3>You make the bad days lighter</h3><p>Even just knowing you're there changes the weight of a rough day. That's not small — that's everything.</p></div>
+    <div class="tl"><h3>You actually listen</h3><p>Not just waiting for your turn to talk — actually listening. It makes me feel like I matter too.</p></div>
+    <div class="tl"><h3>You're my safe space</h3><p>I can be fully myself around you. No performance, no filter. That kind of comfort is rare.</p></div>
+    <div class="tl"><h3>You make me want to be better</h3><p>Just by being the person you are, you inspire me to show up better for everyone I care about.</p></div>
+    <div class="tl"><h3>This bond we have</h3><p>It's one of the most precious things in my life. I protect it because I never want to lose it.</p></div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 4: DUO INVITE ═══ -->
+<div class="page" id="p4" data-idx="3">
+  <p class="eyebrow a" style="color:var(--blush)">okay but also</p>
+  <h2 class="heading a" style="color:#fff;margin-bottom:18px">one very important question</h2>
+  <div class="duo-card a">
+    <span class="d-emoji">🎮⚔️🎮</span>
+    <!-- ✏️ EDIT: game name -->
+    <span class="d-game">[ your game name here ]</span>
+    <h2>will you be my duo?</h2>
+    <p>
+      Every great game needs a great partner. I can't think of anyone I'd rather have beside me —
+      covering my back, calling shots, and absolutely carrying me on my off days.
+      <br/><br/>So… what do you say? 🎯
+    </p>
+    <!-- ✏️ EDIT: change href to Discord / game invite etc. -->
+    <a class="duo-btn" href="#" onclick="event.preventDefault();alert('🎮 put your invite link here!')">Let's queue up 🎮</a>
+  </div>
+</div>
+
+<!-- ═══ PAGE 5: CLOSING ═══ -->
+<div class="page" id="p5" data-idx="4">
+  <div class="c-heart a">🌸</div>
+  <!-- ✏️ EDIT the quote and your sign-off -->
+  <p class="c-quote a">
+    "You are one of the greatest things that has happened to my everyday life.
+    This bond we share — I will always, always choose to protect it."
+  </p>
+  <span class="c-sig a">always, me 🌸</span>
+</div>
+
+<!-- ═══ UI CHROME ═══ -->
+
+<div class="progress-dots" id="pdots">
+  <div class="pd on"></div>
+  <div class="pd"></div>
+  <div class="pd"></div>
+  <div class="pd"></div>
+  <div class="pd"></div>
+</div>
+
+<button class="pg-btn hidden" id="prevBtn" onclick="go(cur-1)">← prev</button>
+<button class="pg-btn" id="nextBtn" onclick="go(cur+1)">next →</button>
+
+<nav class="nav-bar">
+  <button class="nav-btn active" onclick="go(0)"><div class="dot"></div>home</button>
+  <button class="nav-btn" onclick="go(1)"><div class="dot"></div>beautiful</button>
+  <button class="nav-btn" onclick="go(2)"><div class="dot"></div>matters</button>
+  <button class="nav-btn" onclick="go(3)"><div class="dot"></div>duo?</button>
+  <button class="nav-btn" onclick="go(4)"><div class="dot"></div>always</button>
+</nav>
+
+<script>
+  /* ── PETALS ── */
+  const pl = document.getElementById('petal-layer');
+  ['🌸','🌺','✿','❀','🌷','💮'].forEach(e => {
+    for(let j=0;j<3;j++){
+      const d=document.createElement('div'); d.className='petal'; d.textContent=e;
+      d.style.cssText=`left:${Math.random()*100}vw;font-size:${.6+Math.random()*.7}rem;animation-duration:${8+Math.random()*10}s;animation-delay:${Math.random()*14}s`;
+      pl.appendChild(d);
+    }
+  });
+
+  /* ── PAGES ── */
+  const pages   = [...document.querySelectorAll('.page')];
+  const navBtns = [...document.querySelectorAll('.nav-btn')];
+  const dots    = [...document.querySelectorAll('.pd')];
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  let cur = 0;
+  const N = pages.length;
+
+  function go(idx) {
+    if (idx < 0 || idx >= N || idx === cur) return;
+    const dir  = idx > cur ? 1 : -1;
+    const from = pages[cur];
+    const to   = pages[idx];
+
+    // animate out
+    from.style.transition = 'opacity .45s ease, transform .45s cubic-bezier(.4,0,.2,1)';
+    from.style.opacity    = '0';
+    from.style.transform  = `translateX(${dir > 0 ? '-55px' : '55px'})`;
+    from.style.pointerEvents = 'none';
+
+    // prepare destination
+    to.style.transition  = 'none';
+    to.style.opacity     = '0';
+    to.style.transform   = `translateX(${dir > 0 ? '55px' : '-55px'})`;
+    to.style.pointerEvents = 'all';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      to.style.transition = 'opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1)';
+      to.style.opacity    = '1';
+      to.style.transform  = 'translateX(0)';
+      to.classList.add('active');
+    }));
+
+    setTimeout(() => {
+      from.classList.remove('active');
+      from.style.transform = '';
+      from.style.opacity   = '';
+      from.style.pointerEvents = 'none';
+    }, 520);
+
+    cur = idx;
+    ui();
+  }
+
+  function ui() {
+    navBtns.forEach((b,i) => b.classList.toggle('active', i===cur));
+    dots.forEach((d,i)    => d.classList.toggle('on',     i===cur));
+    prevBtn.classList.toggle('hidden', cur===0);
+    nextBtn.classList.toggle('hidden', cur===N-1);
+    document.body.classList.toggle('dark', cur===3);
+  }
+
+  /* keyboard */
+  document.addEventListener('keydown', e => {
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') go(cur+1);
+    if(e.key==='ArrowLeft' ||e.key==='ArrowUp')   go(cur-1);
+  });
+
+  /* swipe */
+  let tx=0;
+  document.addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+  document.addEventListener('touchend',   e => { const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>48) go(dx<0?cur+1:cur-1); });
+
+  ui();
+</script>
+</body>
+</html>
